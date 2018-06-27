@@ -154,3 +154,12 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+
+
+#Jordans turn
+*.xml
+*.class
+*.name
+*.iml
+/out
+/.idea
