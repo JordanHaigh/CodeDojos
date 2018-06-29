@@ -22,10 +22,9 @@ public class Program
         }
 
 
-        String fileToString;
         try
         {
-            fileToString = readFile(args[0], StandardCharsets.UTF_8);
+            String fileToString = readFile(args[0], StandardCharsets.UTF_8);
 
             String[] lineSplit = fileToString.split("\r\n");
 
@@ -41,7 +40,24 @@ public class Program
                 {
                     ArrayPositionAndBracketType newCombination = new ArrayPositionAndBracketType(i,BracketTypes.CLOSE);
                     if(stack.peek().getBracketType().equals(BracketTypes.OPEN)) //If the top element of the stack has a open bracket
-                       matchBracketPair(lineSplit,i);
+                    {
+                        //no need to put on stack, we can remove top element instead
+                        ArrayPositionAndBracketType removedCombo = stack.pop();
+
+                        int operationResult = matchBracketPair(lineSplit,removedCombo, i);
+                        if(operationResult == 0)
+                            lineSplit = cullLineSplit(lineSplit, removedCombo.getArrayPosition(),i,0);
+                        else
+                            lineSplit = cullLineSplit(lineSplit, removedCombo.getArrayPosition(),i,1);
+
+
+                        //cull the section we just matched
+                        //we will need to set i back to the last position where it found a bracket
+                        if(!stack.empty())
+                            i = stack.peek().getArrayPosition()+1;
+                        else
+                            break; //finished matching pairs
+                    }
 
                     else
                         stack.push(newCombination);
@@ -49,7 +65,9 @@ public class Program
 
             }
 
-        }catch(IOException e)        {
+        }
+        catch(IOException e)
+        {
             System.out.println(e.getMessage());
         }
 
@@ -62,11 +80,8 @@ public class Program
         return new String(encoded, encoding);
     }
 
-    static void matchBracketPair(String[] lineSplit, int currentIndex)
+    static int matchBracketPair(String[] lineSplit, ArrayPositionAndBracketType removedCombo, int currentIndex)
     {
-        //no need to put on stack, we can remove top element instead
-        ArrayPositionAndBracketType removedCombo = stack.pop();
-
         //Now we have two integers with our start and end of brackets
 
         //check if line index we just popped contains more than the single bracket
@@ -86,6 +101,8 @@ public class Program
             }
 
             codeSections.add(codeSection);
+            return 0;
+
         }
         else
         {
@@ -101,15 +118,16 @@ public class Program
                 writer++;
             }
             codeSections.add(codeSection);
+            return 1;
         }
     }
 
-    static String[] cullLineSplit(String[] oldStringArray, int cullFrom, int cullTo)
+    static String[] cullLineSplit(String[] oldStringArray, int cullFrom, int cullTo, int additionalIndex)
     {
-        String[] newArr = new String[cullTo-cullFrom];
+        String[] newArr = new String[oldStringArray.length-(cullFrom-cullTo)];
         int index = 0;
 
-        for(int i = 0; i < cullFrom; i++)
+        for(int i = 0; i < cullFrom-additionalIndex; i++)
         {
             newArr[index] = oldStringArray[i];
             index++;
